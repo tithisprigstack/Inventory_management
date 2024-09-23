@@ -103,4 +103,16 @@ class ProductController extends Controller
     ],400);
     }
     }
+
+    public function deleteProduct($pid)
+    {
+        try{
+            Product::where('id',$pid)->delete();
+            return 'success';
+        }
+        catch(\Exception $e)
+    {
+       return  $e->getMessage();
+    }
+    }
 }

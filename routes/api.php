@@ -15,3 +15,4 @@ Route::get('/get-products',[ProductController::class,'getProducts']);
 Route::get('/get-product-details/{pid}',[ProductController::class,'getProductDetails']);
 Route::get('/get-vendors',[VendorController::class,'getVendors']);
 Route::get('/get-vendor-details/{vid}',[VendorController::class,'getVendorDetails']);
+Route::post('/delete-product/{pid}',[ProductController::class,'deleteProduct']);
