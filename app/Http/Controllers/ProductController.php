@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Vendor;
+use Date;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -21,7 +22,7 @@ class ProductController extends Controller
     }
     public function getProductDetails($pid)
     {
-        $productDetail= Product::with('vendor')->where('id',$pid)->first();
+        $productDetail= Product::with('vendor','category')->where('id',$pid)->first();
         return $productDetail;
     }
 
@@ -40,6 +41,14 @@ class ProductController extends Controller
 
         if($addUpdateFlag == 0)
         {
+            $checkBatchNumExists = Product::where('batch_num',$batchNum)->first();
+            if($checkBatchNumExists)
+            {
+                return response()->json([
+                    'status'=>'error',
+                    'message' => 'Batch number is unique for all product',
+                ],400);
+            }
             $newProduct = new Product();
             $newProduct->name = $name;
             $newProduct->description = $description;
@@ -49,7 +58,10 @@ class ProductController extends Controller
             $newProduct->category_id = $categoryId;
             $newProduct->vendor_id = $vendorId;
             $newProduct->save();
-            return 'product added successfully';
+            return response()->json([
+                'status'=>'success',
+                'message' => 'Product added successfully',
+            ],200);
         }
         else{
             $ProductExists = Product::where('id',$productId)->first();
@@ -61,17 +73,25 @@ class ProductController extends Controller
                 'price'=>$price,
                 'category_id'=>$categoryId,
                 'vendor_id'=>$vendorId]);
-
-                return 'product updated successfully';
+                return response()->json([
+                    'status'=>'success',
+                    'message' => 'Product updated successfully',
+                ],200);
             }
             else{
-                return 'product not exist';
+                return response()->json([
+                    'status'=>'error',
+                    'message' => 'Product not Found',
+                ],400);
             }
         }
     }
     catch(\Exception $e)
     {
-       return  $e->getMessage();
+       return response()->json([
+        'status'=>'error',
+        'message' => $e->getMessage(),
+    ],400);
     }
     }
 }
