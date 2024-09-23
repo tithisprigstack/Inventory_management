@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,3 +13,5 @@ Route::get('/get-categories',[ProductController::class,'getCategories']);
 Route::post('/add-update-product',[ProductController::class,'addUpdateProduct']);
 Route::get('/get-products',[ProductController::class,'getProducts']);
 Route::get('/get-product-details/{pid}',[ProductController::class,'getProductDetails']);
+Route::get('/get-vendors',[VendorController::class,'getVendors']);
+Route::get('/get-vendor-details/{vid}',[VendorController::class,'getVendorDetails']);

@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Vendor;
-use Request;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function getCategories()
     {
-       $category = Category::get();
+       $category = Category::all();
        return $category;
     }
 
@@ -27,6 +27,7 @@ class ProductController extends Controller
 
     public function addUpdateProduct(Request $request)
     {
+        try{
         $addUpdateFlag = $request->input('addUpdateFlag');
         $batchNum = $request->input('batchNum');
         $name = $request->input('name');
@@ -42,18 +43,19 @@ class ProductController extends Controller
             $newProduct = new Product();
             $newProduct->name = $name;
             $newProduct->description = $description;
-            $newProduct->serial_num = $batchNum;
+            $newProduct->batch_num = $batchNum;
             $newProduct->quantity = $quantity;
             $newProduct->price = $price;
             $newProduct->category_id = $categoryId;
             $newProduct->vendor_id = $vendorId;
+            $newProduct->save();
             return 'product added successfully';
         }
         else{
-            $ProductExist = Product::where('id',$productId)->first();
-            if($ProductExist)
+            $ProductExists = Product::where('id',$productId)->first();
+            if($ProductExists)
             {
-                $ProductExist->update(['name'=>$name,
+                $ProductExists->update(['name'=>$name,
                 'description'=>$description,
                 'quantity'=>$quantity,
                 'price'=>$price,
@@ -67,9 +69,9 @@ class ProductController extends Controller
             }
         }
     }
-
-public function vendors()
-{
-
-}
+    catch(\Exception $e)
+    {
+       return  $e->getMessage();
+    }
+    }
 }
