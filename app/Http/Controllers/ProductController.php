@@ -67,10 +67,19 @@ class ProductController extends Controller
             $ProductExists = Product::where('id',$productId)->first();
             if($ProductExists)
             {
+                $checkBatchNumExists = Product::where('batch_num',$batchNum)->first();
+            if($checkBatchNumExists)
+            {
+                return response()->json([
+                    'status'=>'error',
+                    'message' => 'Batch number is unique for all product',
+                ],400);
+            }
                 $ProductExists->update(['name'=>$name,
                 'description'=>$description,
                 'quantity'=>$quantity,
                 'price'=>$price,
+                'batch_num' => $batchNum,
                 'category_id'=>$categoryId,
                 'vendor_id'=>$vendorId]);
                 return response()->json([
