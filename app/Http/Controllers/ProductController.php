@@ -39,7 +39,9 @@ class ProductController extends Controller
         $vendorId =  $request->input('vendorId');
         $productId = $request->input('productId');
 
-        $checkSkuExists = Product::where('sku',$sku)->first();
+        if($addUpdateFlag == 0)
+        {
+            $checkSkuExists = Product::where('sku',$sku)->first();
             if($checkSkuExists)
             {
                 return response()->json([
@@ -47,8 +49,6 @@ class ProductController extends Controller
                     'message' => 'SKU is unique for all product',
                 ],400);
             }
-        if($addUpdateFlag == 0)
-        {
             $newProduct = new Product();
             $newProduct->name = $name;
             $newProduct->description = $description;
@@ -74,6 +74,7 @@ class ProductController extends Controller
                 'price'=>$price,
                 'category_id'=>$categoryId,
                 'vendor_id'=>$vendorId]);
+
                 return response()->json([
                     'status'=>'success',
                     'message' => 'Product updated successfully',
