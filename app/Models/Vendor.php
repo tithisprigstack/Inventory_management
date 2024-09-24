@@ -13,7 +13,8 @@ class Vendor extends  Model
         'name',
         'contact_num',
         'email',
-        'address'
+        'address',
+        'company_name'
     ];
 
     public function products()

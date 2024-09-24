@@ -17,7 +17,7 @@ class ProductController extends Controller
 
     public function getProducts()
     {
-        $products= Product::get();
+        $products= Product::with('vendor')->get();
         return $products;
     }
     public function getProductDetails($pid)
@@ -30,7 +30,7 @@ class ProductController extends Controller
     {
         try{
         $addUpdateFlag = $request->input('addUpdateFlag');
-        $batchNum = $request->input('batchNum');
+        $sku = $request->input( 'sku');
         $name = $request->input('name');
         $description = $request->input('description');
         $quantity = $request->input('quantity');
@@ -39,20 +39,20 @@ class ProductController extends Controller
         $vendorId =  $request->input('vendorId');
         $productId = $request->input('productId');
 
-        if($addUpdateFlag == 0)
-        {
-            $checkBatchNumExists = Product::where('batch_num',$batchNum)->first();
-            if($checkBatchNumExists)
+        $checkSkuExists = Product::where('sku',$sku)->first();
+            if($checkSkuExists)
             {
                 return response()->json([
                     'status'=>'error',
-                    'message' => 'Batch number is unique for all product',
+                    'message' => 'SKU is unique for all product',
                 ],400);
             }
+        if($addUpdateFlag == 0)
+        {
             $newProduct = new Product();
             $newProduct->name = $name;
             $newProduct->description = $description;
-            $newProduct->batch_num = $batchNum;
+            $newProduct->sku = $sku;
             $newProduct->quantity = $quantity;
             $newProduct->price = $price;
             $newProduct->category_id = $categoryId;
@@ -67,19 +67,11 @@ class ProductController extends Controller
             $ProductExists = Product::where('id',$productId)->first();
             if($ProductExists)
             {
-                $checkBatchNumExists = Product::where('batch_num',$batchNum)->first();
-            if($checkBatchNumExists)
-            {
-                return response()->json([
-                    'status'=>'error',
-                    'message' => 'Batch number is unique for all product',
-                ],400);
-            }
                 $ProductExists->update(['name'=>$name,
                 'description'=>$description,
+                'sku' => $sku,
                 'quantity'=>$quantity,
                 'price'=>$price,
-                'batch_num' => $batchNum,
                 'category_id'=>$categoryId,
                 'vendor_id'=>$vendorId]);
                 return response()->json([
