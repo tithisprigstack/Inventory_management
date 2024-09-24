@@ -8,14 +8,13 @@ class VendorController extends Controller
 {
     public function getVendors()
     {
-        $vendors = Vendor::with('products')->get();
-        return $vendors;
+        return Vendor::with('products')->get();
     }
 
     public function getVendorDetails($vid)
     {
-        $vendorDetails = vendor::with('products')->where('id', $vid)->first();
-        return $vendorDetails;
+        return vendor::with('products')->where('id', $vid)->first();
+
     }
 
     public function addUpdateVendor(Request $request)
