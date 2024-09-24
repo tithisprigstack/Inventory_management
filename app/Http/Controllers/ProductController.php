@@ -62,12 +62,12 @@ class ProductController extends Controller
             } else {
                 $ProductExists = Product::where('id', $productId)->first();
                 if ($ProductExists) {
-                    $vendor = Vendor::find($vendorId);
-                    if (!$vendor ) {
-                        return response()->json([
-                            'status' => 'error',
-                        'message' => 'vendor is not Found'], 400);
-                    }
+                    // $vendor = Vendor::find($vendorId);
+                    // if (!$vendor ) {
+                    //     return response()->json([
+                    //         'status' => 'error',
+                    //     'message' => 'This vendor is no longer available , you have to update the new vendor for this product'], 400);
+                    // }
                     $ProductExists->update([
                         'name' => $name,
                         'description' => $description,
