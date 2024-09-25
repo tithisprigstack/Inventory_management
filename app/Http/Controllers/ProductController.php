@@ -37,6 +37,7 @@ class ProductController extends Controller
             $categoryId = $request->input('categoryId');
             $vendorId = $request->input('vendorId');
             $productId = $request->input('productId');
+            $remiderQuantity = $request->input('remiderQuantity');
 
             if ($addUpdateFlag == 0) {
                 $checkSkuExists = Product::where('sku', $sku)->first();
@@ -54,6 +55,7 @@ class ProductController extends Controller
                 $newProduct->price = $price;
                 $newProduct->category_id = $categoryId;
                 $newProduct->vendor_id = $vendorId;
+                $newProduct->reminder_quantity = $remiderQuantity;
                 $newProduct->save();
                 return response()->json([
                     'status' => 'success',
@@ -62,17 +64,12 @@ class ProductController extends Controller
             } else {
                 $ProductExists = Product::where('id', $productId)->first();
                 if ($ProductExists) {
-                    // $vendor = Vendor::find($vendorId);
-                    // if (!$vendor ) {
-                    //     return response()->json([
-                    //         'status' => 'error',
-                    //     'message' => 'This vendor is no longer available , you have to update the new vendor for this product'], 400);
-                    // }
                     $ProductExists->update([
                         'name' => $name,
                         'description' => $description,
                         'sku' => $sku,
                         'quantity' => $quantity,
+                        'reminder_quantity' => $remiderQuantity,
                         'price' => $price,
                         'category_id' => $categoryId,
                         'vendor_id' => $vendorId
