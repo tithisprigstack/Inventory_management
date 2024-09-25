@@ -15,6 +15,7 @@ class Product extends Model
     'description',
     'sku',
     'quantity',
+    'reminder_quantity',
     'price',
     'category_id',
     'vendor_id'
