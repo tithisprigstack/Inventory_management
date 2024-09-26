@@ -33,7 +33,7 @@ class InventoryController extends Controller
         else{
             $inventoryData->orderBy('id','desc');
         }
-        $inventoryData = $inventoryData->paginate($limit,'*',null,$page);
+        $inventoryData = $inventoryData->paginate($limit,['*'],'page',$page);
         $inventoryData->getCollection()->transform(function ($inventory) {
          $inventory->purchaseOrderFlag = 0;
         if($inventory->quantity <= $inventory->reminder_quantity)

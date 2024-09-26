@@ -6,9 +6,28 @@ use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
-    public function getVendors()
+    public function getVendors($skey,$sortkey,$sflag,$page,$limit)
     {
-        return Vendor::with('inventories')->get();
+        $allVendors =  Vendor::with('inventories');
+
+        if($skey != 'null')
+        {
+            $allVendors->where('name','like',"%$skey%")
+            ->orWhere('email','like',"%$skey%")
+            ->orWhere('company_name','like',"%$skey%")
+            ->orWhereHas('inventories', function ($query) use ($skey) {
+                $query->where('name', 'like', "%$skey%");
+            });
+        }
+
+        if($sortkey != 'null')
+        {
+            $allVendors->orderBy($sortkey,$sflag);
+        }
+        else{
+            $allVendors->orderBy('id','desc');
+        }
+     return $allVendors->paginate($limit,['*'],'page',$page);
     }
 
     public function getVendorDetails($vid)
