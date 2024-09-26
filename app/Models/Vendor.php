@@ -18,8 +18,12 @@ class Vendor extends  Model
         'company_name'
     ];
 
-    public function products()
+    public function inventories()
     {
-       return $this->hasMany(Product::class,'vendor_id','id');
+       return $this->hasMany(Inventory::class,'vendor_id','id');
+    }
+    public function purchaseOrders()
+    {
+       return $this->hasMany(PurchaseOrder::class,'vendor_id','id');
     }
 }
