@@ -22,5 +22,5 @@ Route::post('/add-update-vendor',[VendorController::class,'addUpdateVendor']);
 Route::post('/delete-vendor/{vid}',[VendorController::class,'deleteVendor']);
 Route::get('/get-vendors-data',[VendorController::class,'getVendorsData']);
 
-// Route::post('/generate-purchase-order',[OrderController::class,'generatePurchaseOrder']);
+Route::post('/generate-purchase-order',[OrderController::class,'generatePurchaseOrder']);
 Route::post('/add-inventory-utilization',[UtilizationController::class,'addInventoryUtilization']);

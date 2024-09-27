@@ -12,6 +12,8 @@ class UtilizationController extends Controller
     {
         $inventoryId = $request->input('inventoryId');
         $quantity = $request->input('quantity');
+        $usagePurpose = $request->input('usagePurpose');
+        $usedDate = $request->input('usedDate');
 
         $checkInventory = Inventory::where('id',$inventoryId)->first();
 
@@ -28,8 +30,9 @@ class UtilizationController extends Controller
 
             $newInventoryUsge = new InventoryUsage();
             $newInventoryUsge->inventory_id = $checkInventory->id;
+            $newInventoryUsge->usage_purpose = $usagePurpose;
             $newInventoryUsge->quantity = $quantity;
-            $newInventoryUsge->used_date = date("Y-m-d");
+            $newInventoryUsge->used_date = $usedDate;
             $newInventoryUsge->save();
 
             return response()->json([

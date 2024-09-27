@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseOrderItem extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory;
 
  protected $fillable = [
     'purchase_order_id',

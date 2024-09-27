@@ -15,41 +15,40 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    public function generatePurchaseOrder(Request $request)
+    {
+        $vendorInventoryDetails = $request->input('vendorInventoryDetails');
 
-    // public function generatePurchaseOrder(Request $request)
-    // {
-    //     $vendorInventoryDetails = $request->input('vendorInventoryDetails');
+        foreach($vendorInventoryDetails as $vendorInventoryDetail)
+        {
+            $checkVendor = Vendor::find($vendorInventoryDetail['vendor_id']);
+            if($checkVendor)
+            {
+                $newPurchaseOrder = new PurchaseOrder();
+                $newPurchaseOrder->vendor_id = $vendorInventoryDetail['vendor_id'];
+                $newPurchaseOrder->status = 1;
+                $newPurchaseOrder->order_date = now();
+                $newPurchaseOrder->save();
 
-    //     foreach($vendorInventoryDetails as $vendorInventoryDetail)
-    //     {
-    //         $checkVendor = Vendor::find($vendorInventoryDetail['vendor_id']);
-    //         if($checkVendor)
-    //         {
-    //             $newPurchaseOrder = new PurchaseOrder();
-    //             $newPurchaseOrder->vendor_id = $vendorInventoryDetail['vendor_id'];
-    //             $newPurchaseOrder->status = 1;
-    //             $newPurchaseOrder->order_date = now();
-    //             $newPurchaseOrder->save();
-
-    //             $total_amount = 0;
-    //             foreach($vendorInventoryDetail['inventoryDetails'] as $inventoryDetail)
-    //             {
-    //                 $newPurchaseOrderItem = new PurchaseOrderItem();
-    //                 $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
-    //                 $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventory_id'];
-    //                 $newPurchaseOrderItem->quantity =  $inventoryDetail['reminder_quantity'];
-    //                 $newPurchaseOrderItem->price =  $inventoryDetail['price'];
-    //                 $newPurchaseOrderItem->save();
-    //                 $total_amount += $inventoryDetail['reminder_quantity'] * $inventoryDetail['price'];
-    //             }
-    //             $newPurchaseOrder->update(['total_amount' => $total_amount]);
-    //             return response()->json([
-    //                 'status' => 'success',
-    //                 'message' => 'Purchased order generated successfully',
-    //             ], 200);
-    //         }
-    //     }
-    // }
+                $total_amount = 0;
+                foreach($vendorInventoryDetail['inventoryDetails'] as $inventoryDetail)
+                {
+                    $newPurchaseOrderItem = new PurchaseOrderItem();
+                    $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
+                    $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventory_id'];
+                    $newPurchaseOrderItem->quantity =  $inventoryDetail['reminder_quantity'];
+                    $newPurchaseOrderItem->price =  $inventoryDetail['price'];
+                    $newPurchaseOrderItem->save();
+                    $total_amount += $inventoryDetail['reminder_quantity'] * $inventoryDetail['price'];
+                }
+                $newPurchaseOrder->update(['total_amount' => $total_amount]);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Purchased order generated successfully',
+                ], 200);
+            }
+        }
+    }
 
     // public function generatePOForMultipleProduct()
     // {
