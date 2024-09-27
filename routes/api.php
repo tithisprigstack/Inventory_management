@@ -19,5 +19,6 @@ Route::get('/get-vendor-details/{vid}',[VendorController::class,'getVendorDetail
 Route::post('/delete-inventory/{id}',[InventoryController::class,'deleteInventory']);
 Route::post('/add-update-vendor',[VendorController::class,'addUpdateVendor']);
 Route::post('/delete-vendor/{vid}',[VendorController::class,'deleteVendor']);
+Route::get('/get-vendors-data',[VendorController::class,'getVendorsData']);
 
 // Route::post('/generate-purchase-order',[OrderController::class,'generatePurchaseOrder']);

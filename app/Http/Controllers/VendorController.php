@@ -103,4 +103,9 @@ class VendorController extends Controller
             return $e->getMessage();
         }
     }
+
+    public function getVendorsData()
+    {
+       return Vendor::with('inventories')->get();
+    }
 }
