@@ -47,7 +47,7 @@ class InventoryController extends Controller
 
     public function getInventoryDetails($id)
     {
-        return Inventory::with('vendor', 'category')->where('id', $id)->first();
+        return Inventory::with('vendor', 'category','usageHistory')->where('id', $id)->first();
     }
 
     public function addUpdateInventory(Request $request)

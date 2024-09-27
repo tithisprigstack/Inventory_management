@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\UtilizationController;
 use App\Http\Controllers\VendorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -22,3 +23,4 @@ Route::post('/delete-vendor/{vid}',[VendorController::class,'deleteVendor']);
 Route::get('/get-vendors-data',[VendorController::class,'getVendorsData']);
 
 // Route::post('/generate-purchase-order',[OrderController::class,'generatePurchaseOrder']);
+Route::post('/add-inventory-utilization',[UtilizationController::class,'addInventoryUtilization']);

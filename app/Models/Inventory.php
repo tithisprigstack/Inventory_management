@@ -29,4 +29,9 @@ class Inventory extends Model
     {
        return  $this->belongsTo(Vendor::class,'vendor_id','id');
     }
+
+    public function usageHistory()
+    {
+        return  $this->hasMany(InventoryUsage::class,'inventory_id','id');
+    }
 }
