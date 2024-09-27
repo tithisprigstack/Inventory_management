@@ -9,45 +9,42 @@ class InventoryController extends Controller
 {
     public function getCategories()
     {
-      return Category::all();
+        return Category::all();
     }
-
-    public function allInventories($skey,$sortkey,$sflag,$page,$limit)
+    public function allInventories($skey, $sortkey, $sflag, $page, $limit)
     {
-        $inventoryData =  Inventory::with(['vendor' => function($query) {
-            $query->withTrashed();
-        }]);
-        if($skey != 'null')
-        {
-            $inventoryData->where('name','like',"%$skey%")
-            ->orWhere('sku','like',"%$skey%")
-            ->orWhereHas('vendor',function ($q) use ($skey)
-            {
-                $q->where('name','like',"%$skey%");
+        $inventoryData = Inventory::join('vendors', 'inventories.vendor_id', '=', 'vendors.id')
+            ->select('inventories.*', 'vendors.name as vendor_name');
+
+        if ($skey != 'null') {
+            $inventoryData->where(function ($query) use ($skey) {
+                $query->where('inventories.name', 'like', "%$skey%")
+                    ->orWhere('inventories.sku', 'like', "%$skey%")
+                    ->orWhere('vendors.name', 'like', "%$skey%");
             });
         }
-        if($sortkey != 'null')
-        {
-            $inventoryData->orderBy($sortkey,$sflag);
+
+        if ($sortkey != 'null') {
+            if ($sortkey == 'vendor_name') {
+                $inventoryData->orderBy('vendors.name', $sflag);
+            } else {
+                $inventoryData->orderBy($sortkey, $sflag);
+            }
+        } else {
+            $inventoryData->orderBy('id', 'desc');
         }
-        else{
-            $inventoryData->orderBy('id','desc');
-        }
-        $inventoryData = $inventoryData->paginate($limit,['*'],'page',$page);
+        $inventoryData = $inventoryData->paginate($limit, ['*'], 'page', $page);
+
         $inventoryData->getCollection()->transform(function ($inventory) {
-         $inventory->purchaseOrderFlag = 0;
-        if($inventory->quantity <= $inventory->reminder_quantity)
-        {
-         $inventory->purchaseOrderFlag = 1;
-        }
-        return $inventory;
-    });
-    return $inventoryData;
+            $inventory->purchaseOrderFlag = ($inventory->quantity <= $inventory->reminder_quantity) ? 1 : 0;
+            return $inventory;
+        });
+        return $inventoryData;
     }
 
     public function getInventoryDetails($id)
     {
-        return Inventory::with('vendor', 'category','usageHistory')->where('id', $id)->first();
+        return Inventory::with('vendor', 'category', 'usageHistory')->where('id', $id)->first();
     }
 
     public function addUpdateInventory(Request $request)
@@ -62,7 +59,7 @@ class InventoryController extends Controller
             $categoryId = $request->input('categoryId');
             $vendorId = $request->input('vendorId');
             $inventoryId = $request->input('inventoryId');
-            $remiderQuantity = $request->input('remiderQuantity');
+            $reminderQuantity = $request->input('reminderQuantity');
 
             if ($addUpdateFlag == 0) {
                 $checkSkuExists = Inventory::where('sku', $sku)->first();
@@ -80,7 +77,7 @@ class InventoryController extends Controller
                 $newInventory->price = $price;
                 $newInventory->category_id = $categoryId;
                 $newInventory->vendor_id = $vendorId;
-                $newInventory->reminder_quantity = $remiderQuantity;
+                $newInventory->reminder_quantity = $reminderQuantity;
                 $newInventory->save();
                 return response()->json([
                     'status' => 'success',
@@ -89,12 +86,19 @@ class InventoryController extends Controller
             } else {
                 $inventoryExists = Inventory::where('id', $inventoryId)->first();
                 if ($inventoryExists) {
+                    $checkSkuExists = Inventory::where('sku', $sku)->where('id','!=',$inventoryExists->id)->first();
+                if ($checkSkuExists) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'SKU is unique for all item',
+                    ], 400);
+                }
                     $inventoryExists->update([
                         'name' => $name,
                         'description' => $description,
                         'sku' => $sku,
                         'quantity' => $quantity,
-                        'reminder_quantity' => $remiderQuantity,
+                        'reminder_quantity' => $reminderQuantity,
                         'price' => $price,
                         'category_id' => $categoryId,
                         'vendor_id' => $vendorId

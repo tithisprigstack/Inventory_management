@@ -29,7 +29,7 @@ class UtilizationController extends Controller
             $newInventoryUsge = new InventoryUsage();
             $newInventoryUsge->inventory_id = $checkInventory->id;
             $newInventoryUsge->quantity = $quantity;
-            $newInventoryUsge->used_date = now();
+            $newInventoryUsge->used_date = date("Y-m-d");
             $newInventoryUsge->save();
 
             return response()->json([
