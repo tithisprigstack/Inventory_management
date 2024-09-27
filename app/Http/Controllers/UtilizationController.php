@@ -17,7 +17,10 @@ class UtilizationController extends Controller
 
         if($checkInventory->quantity < $quantity)
         {
-            return 'not enough stock';
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This item does not have enough stock',
+            ], 400);
         }
         else{
             $checkInventory->quantity -= $quantity;
@@ -29,7 +32,10 @@ class UtilizationController extends Controller
             $newInventoryUsge->used_date = now();
             $newInventoryUsge->save();
 
-            return 'new inventory usage added';
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Utilization data added successfully',
+            ], 200);
         }
     }
 }
