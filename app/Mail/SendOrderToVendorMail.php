@@ -8,16 +8,19 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Attachment;
 
-class PurchaseOrderMail extends Mailable
+class SendOrderToVendorMail extends Mailable
 {
     use Queueable, SerializesModels;
-
+    public $path;
+    public $data;
     /**
      * Create a new message instance.
      */
-    public function __construct($data)
+    public function __construct($path,$data)
     {
+        $this->path = $path;
         $this->data = $data;
     }
 
@@ -37,9 +40,8 @@ class PurchaseOrderMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.sendorderToVendor',
-            with: ['data' => $this->data],
-
+            view: 'emails.sendOrderToVendor',
+            with:['data'=> $this->data]
         );
     }
 
@@ -50,6 +52,10 @@ class PurchaseOrderMail extends Mailable
      */
     public function attachments(): array
     {
-        return [];
+        return [
+            Attachment::fromPath($this->path)
+                    ->as('PurchaseOrder.pdf')
+                    ->withMime('application/pdf'),
+        ];
     }
 }

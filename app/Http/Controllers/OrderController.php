@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Mail\PurchaseOrderMail;
+use App\Mail\SendOrderToVendorMail;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\Product;
@@ -12,6 +13,8 @@ use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use PDF;
 
 class OrderController extends Controller
 {
@@ -31,25 +34,41 @@ class OrderController extends Controller
                 $newPurchaseOrder->save();
 
                 $total_amount = 0;
+                $inventoryData = [];
                 foreach($vendorInventoryDetail['inventoryDetails'] as $inventoryDetail)
                 {
+                    $inventory = Inventory::with('category')->where('id',$inventoryDetail['inventory_id'])->first();
                     $newPurchaseOrderItem = new PurchaseOrderItem();
                     $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
                     $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventory_id'];
                     $newPurchaseOrderItem->quantity =  $inventoryDetail['reminder_quantity'];
-                    $newPurchaseOrderItem->price =  $inventoryDetail['price'];
+                    $newPurchaseOrderItem->price =  $inventory->price;
                     $newPurchaseOrderItem->save();
-                    $total_amount += $inventoryDetail['reminder_quantity'] * $inventoryDetail['price'];
+                    $total_amount += $inventoryDetail['reminder_quantity'] * $inventory->price;
+                    $inventoryData[] = ['inventory' => $inventory,'poItemDetails' => $newPurchaseOrderItem];
                 }
                 $newPurchaseOrder->update(['total_amount' => $total_amount]);
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Purchased order generated successfully',
-                ], 200);
+                $data = [
+                    'vendorDetails' => $checkVendor,
+                    'inventoryDetails'=>$inventoryData,
+                ];
+                $filename = 'Orders/' . $newPurchaseOrder->id . '_' . time() . '.pdf';
+                $pdf = PDF::loadView('emails.newPurchaseOrder', compact('data'));
+                Storage::disk('public')->put($filename, $pdf->output());
+                $path = Storage::disk('public')->path($filename);
+                $newPurchaseOrder->update(['po_pdf' => $filename]);
+                try {
+                    Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
+                } catch (\Exception $e) {
+                    Log::error("Mail sending failed: " . $e->getMessage());
+                }
             }
         }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Purchased order generated successfully',
+        ], 200);
     }
-
     // public function generatePOForMultipleProduct()
     // {
     //     $allInventories = Inventory::whereColumn('quantity', '<=', 'reminder_quantity')->with('vendor')->get();
