@@ -15,7 +15,8 @@ class PurchaseOrder extends Model
     'total_amount',
     'status',
     'order_date',
-    'po_pdf'
+    'po_pdf',
+    'delivery_date'
  ];
 
     public function purchaseInventories()

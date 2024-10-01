@@ -6,10 +6,10 @@
     <title>Preview PO Details</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Poppins", sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            /* background-color: #f9f9f9; */
         }
         .container {
             width: 80%;
@@ -21,10 +21,11 @@
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+        h3 {
             text-align: center;
-            font-size: 28px;
+            /* font-size: 24px; */
             margin-bottom: 20px;
+            font-weight: 700;
         }
         .header {
             display: flex;
@@ -41,6 +42,7 @@
             margin-top: 20px;
         }
         table, th, td {
+            text-align: left;
             border: 1px solid #ddd;
         }
         th, td {
@@ -53,29 +55,34 @@
         .text-right {
             text-align: right;
         }
-        /* Additional Styling for PDF-like Look */
         .table-summary {
             margin-top: 20px;
-            font-size: 16px;
+            font-size: 14px;
             text-align: right;
         }
         .table-summary strong {
-            font-size: 18px;
+            font-size: 14px;
         }
         .total-row {
             background-color: #f4f4f4;
             font-weight: bold;
         }
-        /* Adding space between Vendor Name and Address */
         .vendor-details p {
             margin-bottom: 10px;
+        }
+        hr{
+            margin: 20px 0;
+            border: 0;
+            height: 1px;
+            background: #ddd;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Purchase Order</h1>
+    <h3>Purchase Order</h3>
+    <hr>
     <div class="header">
         <div class="text-right">
             <p><strong>Generated on:</strong> {{ date('Y-m-d') }}</p>
@@ -100,18 +107,17 @@
             <tr>
                 <td>{{ $inventory['inventory']['name'] }}</td>
                 <td>{{ $inventory['poItemDetails']['quantity'] ?? '-' }}</td>
-                <td>{{ number_format($inventory['poItemDetails']['price'] ) }}</td>
-                <td>{{ number_format(($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] )) }}</td>
+                <td>{{$inventory['poItemDetails']['price']  }}</td>
+                <td>{{ ($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] ) }}</td>
             </tr>
         @endforeach
         </tbody>
     </table>
 
-    <!-- Summary Section -->
     <div class="table-summary">
-        <p><strong>Total Price:</strong> {{ number_format(array_sum(array_map(function($inventory) {
+        <p><strong>Total Price:</strong> {{ array_sum(array_map(function($inventory) {
             return ($inventory['poItemDetails']['quantity']) * ($inventory['poItemDetails']['price']);
-        }, $data['inventoryDetails']))) }}</p>
+        }, $data['inventoryDetails'])) }}</p>
     </div>
 </div>
 
