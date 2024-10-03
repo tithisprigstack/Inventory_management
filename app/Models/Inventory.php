@@ -13,21 +13,19 @@ class Inventory extends Model
  protected $fillable = [
     'name',
     'description',
-    'sku',
     'quantity',
     'reminder_quantity',
     'price',
-    'category_id',
-    'vendor_id'
+    'category_id'
  ];
 
     public function category()
     {
        return  $this->belongsTo(Category::class,'category_id','id');
     }
-    public function vendor()
+    public function inventoryDetail()
     {
-       return  $this->belongsTo(Vendor::class,'vendor_id','id');
+       return  $this->hasOne(InventoryDetail::class,'inventory_id','id');
     }
 
     public function usageHistory()

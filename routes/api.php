@@ -24,5 +24,6 @@ Route::get('/get-vendors-data',[VendorController::class,'getVendorsData']);
 
 Route::post('/generate-purchase-order',[OrderController::class,'generatePurchaseOrder']);
 Route::post('/add-inventory-utilization',[UtilizationController::class,'addInventoryUtilization']);
-Route::get('/all-purchase-orders',[OrderController::class,'allPurchaseOrders']);
+Route::get('/all-purchase-orders/{skey}&{sortKey}&{sflag}&{page}&{limit}',[OrderController::class,'allPurchaseOrders']);
 Route::get('/get-purchase-order-details/{pid}',[OrderController::class,'poDetails']);
+Route::post('/update-order',[OrderController::class,'updateOrder']);

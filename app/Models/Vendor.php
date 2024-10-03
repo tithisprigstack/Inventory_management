@@ -15,12 +15,13 @@ class Vendor extends  Model
         'contact_num',
         'email',
         'address',
-        'company_name'
+        'company_name',
+        'status'
     ];
 
-    public function inventories()
+    public function inventoryDetails()
     {
-       return $this->hasMany(Inventory::class,'vendor_id','id');
+       return $this->hasMany(InventoryDetail::class,'vendor_id','id');
     }
     public function purchaseOrders()
     {

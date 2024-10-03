@@ -21,78 +21,77 @@ class OrderController extends Controller
 
     public function generatePurchaseOrder(Request $request)
     {
-        try {
-            $vendorInventoryDetails = $request->input('vendorInventoryDetails');
-            foreach ($vendorInventoryDetails as $vendorInventoryDetail) {
-                $vendorId = $vendorInventoryDetail['vendor_id'];
-                if (!isset($groupedInventoryDetails[$vendorId])) {
-                    $groupedInventoryDetails[$vendorId] = [];
+        $inventoryDetails = $request->input('inventoryDetails');
+        $vendorId =  $request->input('vendorId');
+
+    $checkVendor = Vendor::where('id',$vendorId)->where('status',1)->first();
+        if ($checkVendor) {
+                $newPurchaseOrder = new PurchaseOrder();
+                $newPurchaseOrder->vendor_id = $vendorId;
+                $newPurchaseOrder->status = 1;
+                $newPurchaseOrder->save();
+
+                $total_amount = 0;
+                $inventoryData = [];
+                foreach($inventoryDetails as $inventoryDetail)
+                {
+                    $inventory = Inventory::with('category')->where('id',$inventoryDetail['inventoryId'])->first();
+                    $newPurchaseOrderItem = new PurchaseOrderItem();
+                    $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
+                    $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventoryId'];
+                    $newPurchaseOrderItem->quantity =  $inventoryDetail['reminderQuantity'];
+                    $newPurchaseOrderItem->price =  $inventoryDetail['price'];
+                    $newPurchaseOrderItem->save();
+                    $total_amount += $inventoryDetail['reminderQuantity'] * $inventoryDetail['price'];
+                    $inventoryData[] = ['inventory' => $inventory,'poItemDetails' => $newPurchaseOrderItem];
                 }
-                $groupedInventoryDetails[$vendorId][] = $vendorInventoryDetail;
-            }
-
-            foreach ($groupedInventoryDetails as $vendorId => $inventorydetails) {
-                $checkVendor = Vendor::find($vendorId);
-                if ($checkVendor) {
-                    $newPurchaseOrder = new PurchaseOrder();
-                    $newPurchaseOrder->vendor_id = $vendorId;
-                    $newPurchaseOrder->status = 1;
-                    $newPurchaseOrder->order_date = now();
-                    $newPurchaseOrder->save();
-
-                    $total_amount = 0;
-                    $inventoryData = [];
-
-                    foreach ($inventorydetails as $inventoryDetail) {
-                        $inventory = Inventory::with('category')->where('id', $inventoryDetail['inventory_id'])->first();
-                        $newPurchaseOrderItem = new PurchaseOrderItem();
-                        $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
-                        $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventory_id'];
-                        $newPurchaseOrderItem->quantity = $inventoryDetail['reminder_quantity'];
-                        $newPurchaseOrderItem->price = $inventory->price;
-                        $newPurchaseOrderItem->save();
-                        $total_amount += $inventoryDetail['reminder_quantity'] * $inventory->price;
-                        $inventoryData[] = ['inventory' => $inventory, 'poItemDetails' => $newPurchaseOrderItem];
-                    }
-                    $newPurchaseOrder->update(['total_amount' => $total_amount]);
-                    $data = [
-                        'vendorDetails' => $checkVendor,
-                        'inventoryDetails' => $inventoryData,
-                    ];
-                    $filename = 'Orders/' . $newPurchaseOrder->id . '_' . time() . '.pdf';
-                    $pdf = PDF::loadView('emails.newPurchaseOrder', compact('data'));
-                    Storage::disk('public')->put($filename, $pdf->output());
-                    $path = public_path('documents/' . $filename);
-                    $newPurchaseOrder->update(['po_pdf' => $filename]);
-                    // try {
-                    //     Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
-                    // } catch (\Exception $e) {
-                    //     Log::error("Mail sending failed: " . $e->getMessage());
-                    // }
-                } else {
-                    Log::error("This vendor is currently not active");
-                    continue;
+                $newPurchaseOrder->update(['total_amount' => $total_amount]);
+                $data = [
+                    'vendorDetails' => $checkVendor,
+                    'inventoryDetails'=>$inventoryData,
+                ];
+                $filename = 'Orders/' . $newPurchaseOrder->id . '_' . time() . '.pdf';
+                $pdf = PDF::loadView('emails.newPurchaseOrder', compact('data'));
+                Storage::disk('public')->put($filename, $pdf->output());
+                $path = public_path('documents/'.$filename);
+                $newPurchaseOrder->update(['po_pdf' => $filename]);
+                try {
+                    Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
+                } catch (\Exception $e) {
+                    Log::error("Mail sending failed: " . $e->getMessage());
                 }
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Purchased order generated successfully',
+                ], 200);
             }
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Purchased order generated successfully',
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 400);
-        }
+            else{
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'This Vendor is currently not active',
+                ], 400);
+            }
     }
 
-    public function allPurchaseOrders()
-    {
-        return PurchaseOrder::with('purchaseInventories.inventory','vendor')->get();
-    }
+    // public function allPurchaseOrders($skey,$sortKey,$sflag,$page,$limit)
+    // {
+    //     $purchaseData = PurchaseOrder::with('purchaseInventories.inventory','vendor');
 
-    public function poDetails($pid)
-    {
-       return PurchaseOrder::with('purchaseInventories.inventory','vendor')->where('id', $pid)->first();
-    }
+    //     if($skey != 'null')
+    //     {
+    //         $purchaseData->where('id','like',"%$skey%")->orWhere('order_date','like',"%$skey%");
+    //     }
+    //     return $purchaseData->get();
+    // }
+
+    // public function poDetails($pid)
+    // {
+    //    return PurchaseOrder::with('purchaseInventories.inventory','vendor')->where('id', $pid)->first();
+    // }
+
+    // public function updateOrder(Request $request)
+    // {
+    //     $orderId = $request->input('orderId');
+    //     return 'success';
+    // }
 }

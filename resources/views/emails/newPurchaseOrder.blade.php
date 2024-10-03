@@ -107,7 +107,7 @@
             <tr>
                 <td>{{ $inventory['inventory']['name'] }}</td>
                 <td>{{ $inventory['poItemDetails']['quantity'] ?? '-' }}</td>
-                <td>{{$inventory['poItemDetails']['price']  }}</td>
+                <td>{{ $inventory['poItemDetails']['price']  }}</td>
                 <td>{{ ($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] ) }}</td>
             </tr>
         @endforeach

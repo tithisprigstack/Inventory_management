@@ -8,15 +8,18 @@ class VendorController extends Controller
 {
     public function getVendors($skey,$sortkey,$sflag,$page,$limit)
     {
-        $allVendors =  Vendor::with('inventories');
+        $allVendors =  Vendor::with('inventoryDetails.inventory')->where('status',1);
 
         if($skey != 'null')
         {
             $allVendors->where('name','like',"%$skey%")
             ->orWhere('email','like',"%$skey%")
             ->orWhere('company_name','like',"%$skey%")
-            ->orWhereHas('inventories', function ($query) use ($skey) {
-                $query->where('name', 'like', "%$skey%");
+            ->orWhereHas('inventoryDetails', function ($query) use ($skey) {
+                $query->whereHas('inventory',function ($subquery) use ($skey)
+                {
+                    $subquery->where('name','like',"%$skey%");
+                });
             });
         }
 
@@ -32,7 +35,7 @@ class VendorController extends Controller
 
     public function getVendorDetails($vid)
     {
-        return vendor::with('inventories')->where('id', $vid)->first();
+        return vendor::with('inventoryDetails')->where('id', $vid)->first();
     }
 
     public function addUpdateVendor(Request $request)
@@ -60,6 +63,7 @@ class VendorController extends Controller
                 $newVendor->email = $email;
                 $newVendor->address = $address;
                 $newVendor->company_name = $companyName;
+                $newVendor->status = 1;
                 $newVendor->save();
                 return response()->json([
                     'status' => 'success',
@@ -97,7 +101,7 @@ class VendorController extends Controller
     public function deleteVendor($vid)
     {
         try {
-            Vendor::where('id', $vid)->delete();
+            Vendor::where('id', $vid)->update(['status'=>2]);
             return 'success';
         } catch (\Exception $e) {
             return $e->getMessage();
@@ -106,6 +110,6 @@ class VendorController extends Controller
 
     public function getVendorsData()
     {
-       return Vendor::with('inventories')->get();
+       return Vendor::with('inventoryDetails.inventory')->where('status',1)->get();
     }
 }
