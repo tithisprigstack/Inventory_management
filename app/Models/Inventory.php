@@ -32,4 +32,9 @@ class Inventory extends Model
     {
         return  $this->hasMany(InventoryUsage::class,'inventory_id','id');
     }
+
+    public function purchaseLogs()
+    {
+        return  $this->hasMany(PurchaseOrderItem::class,'inventory_id','id');
+    }
 }

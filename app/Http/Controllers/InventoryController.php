@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\InventoryDetail;
+use App\Models\PurchaseOrderItem;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -15,7 +16,7 @@ class InventoryController extends Controller
 
     public function allInventories($skey, $sortkey, $sflag, $page, $limit)
     {
-        $inventoryData = Inventory::with('category','inventoryDetail.vendor');
+        $inventoryData = Inventory::with('category','inventoryDetail.vendor','purchaseLogs.purchaseOrder');
         if($skey != 'null')
         {
             $inventoryData->where('name', 'like', "%$skey%")
@@ -33,22 +34,30 @@ class InventoryController extends Controller
 
         if($sortkey != 'null')
         {
-                $inventoryData->orderBy($sortkey,$sflag);
+                $inventoryData->orderBy($sortkey, $sflag);
         }
         else
         {
             $inventoryData->orderBy('id','desc');
         }
-
         $inventoryData = $inventoryData->paginate($limit,['*'],'page',$page);
         $inventoryData->getCollection()->transform(function ($inventory)
         {
+            $inventory->purchaseOrderFlag = 0;
+            $inventory->activepurchaseOrderFlag = 0;
             if($inventory->quantity < $inventory->reminder_quantity)
             {
                 $inventory->purchaseOrderFlag = 1;
             }
-            else{
-                $inventory->purchaseOrderFlag = 0;
+            if($inventory['purchaseLogs'])
+            {
+                foreach($inventory['purchaseLogs'] as $purchaseLog)
+            {
+                if($purchaseLog->purchaseOrder->status == 1)
+                {
+                    $inventory->activepurchaseOrderFlag = 1;
+                }
+            }
             }
             return $inventory;
         });
@@ -56,7 +65,7 @@ class InventoryController extends Controller
     }
     public function getInventoryDetails($id)
     {
-        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory')->where('id', $id)->first();
+        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory','purchaseLogs')->where('id', $id)->first();
     }
 
     public function addUpdateInventory(Request $request)

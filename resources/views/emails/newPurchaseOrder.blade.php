@@ -89,6 +89,7 @@
         </div>
         <div class="vendor-details">
             <p><strong>Vendor Name:</strong> {{ $data['vendorDetails']['name'] ?? '-' }}</p>
+            <p><strong>Contact Number:</strong> {{ $data['vendorDetails']['contact_num'] ?? '-' }}</p>
             <p><strong>Address:</strong> {{ $data['vendorDetails']['address'] ?? '-' }}</p>
         </div>
     </div>

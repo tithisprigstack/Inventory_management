@@ -89,9 +89,16 @@ class OrderController extends Controller
     //    return PurchaseOrder::with('purchaseInventories.inventory','vendor')->where('id', $pid)->first();
     // }
 
-    // public function updateOrder(Request $request)
-    // {
-    //     $orderId = $request->input('orderId');
-    //     return 'success';
-    // }
+    public function updateOrder(Request $request)
+    {
+        $inventoryId = $request->input('inventoryId');
+        $quantity = $request->input('quantity');
+
+        $purchaseOrder = PurchaseOrderItem::with('purchaseOrder')->where('inventory_id',$inventoryId)->whereHas('purchaseOrder',function ($q){
+            $q->where('status',1);
+        });
+
+
+        return $purchaseOrder->get();
+    }
 }
