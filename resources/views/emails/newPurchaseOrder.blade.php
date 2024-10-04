@@ -108,17 +108,17 @@
             <tr>
                 <td>{{ $inventory['inventory']['name'] }}</td>
                 <td>{{ $inventory['poItemDetails']['quantity'] ?? '-' }}</td>
-                <td>{{ $inventory['poItemDetails']['price']  }}</td>
-                <td>{{ ($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] ) }}</td>
+                <td>Rs.{{ $inventory['poItemDetails']['price']  }}</td>
+                <td>Rs.{{ number_format(($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] ),2) }}</td>
             </tr>
         @endforeach
         </tbody>
     </table>
 
     <div class="table-summary">
-        <p><strong>Total Price:</strong> {{ array_sum(array_map(function($inventory) {
+        <p><strong>Total Price:</strong> Rs. {{ number_format(array_sum(array_map(function($inventory) {
             return ($inventory['poItemDetails']['quantity']) * ($inventory['poItemDetails']['price']);
-        }, $data['inventoryDetails'])) }}</p>
+        }, $data['inventoryDetails'])),2) }}</p>
     </div>
 </div>
 

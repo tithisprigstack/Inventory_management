@@ -16,48 +16,37 @@ class InventoryController extends Controller
 
     public function allInventories($skey, $sortkey, $sflag, $page, $limit)
     {
-        $inventoryData = Inventory::with('category','inventoryDetail.vendor','purchaseLogs.purchaseOrder');
-        if($skey != 'null')
-        {
+        $inventoryData = Inventory::with('category', 'inventoryDetail.vendor', 'purchaseLogs.purchaseOrder');
+        if ($skey != 'null') {
             $inventoryData->where('name', 'like', "%$skey%")
-            ->orWhereHas('category',function ($q) use ($skey)
-            {
-                $q->where('name','like',"%$skey%");
-            })
-            ->orWhereHas('inventoryDetail', function ($query) use ($skey) {
-                $query->whereHas('vendor',function ($subquery) use ($skey)
-                {
-                    $subquery->where('name','like',"%$skey%");
+                ->orWhereHas('category', function ($q) use ($skey) {
+                    $q->where('name', 'like', "%$skey%");
+                })
+                ->orWhereHas('inventoryDetail', function ($query) use ($skey) {
+                    $query->whereHas('vendor', function ($subquery) use ($skey) {
+                        $subquery->where('name', 'like', "%$skey%");
+                    });
                 });
-            });
         }
 
-        if($sortkey != 'null')
-        {
-                $inventoryData->orderBy($sortkey, $sflag);
+        if ($sortkey != 'null') {
+            $inventoryData->orderBy($sortkey, $sflag);
+        } else {
+            $inventoryData->orderBy('id', 'desc');
         }
-        else
-        {
-            $inventoryData->orderBy('id','desc');
-        }
-        $inventoryData = $inventoryData->paginate($limit,['*'],'page',$page);
-        $inventoryData->getCollection()->transform(function ($inventory)
-        {
-            $inventory->purchaseOrderFlag = 0;
-            $inventory->activepurchaseOrderFlag = 0;
-            if($inventory->quantity < $inventory->reminder_quantity)
-            {
-                $inventory->purchaseOrderFlag = 1;
+        $inventoryData = $inventoryData->paginate($limit, ['*'], 'page', $page);
+        $inventoryData->getCollection()->transform(function ($inventory) {
+            $inventory->needsPurchaseOrderFlag = 0;
+            $inventory->hasActivePurchaseOrderFlag = 0;
+            if ($inventory->quantity < $inventory->reminder_quantity) {
+                $inventory->needsPurchaseOrderFlag = 1;
             }
-            if($inventory['purchaseLogs'])
-            {
-                foreach($inventory['purchaseLogs'] as $purchaseLog)
-            {
-                if($purchaseLog->purchaseOrder->status == 1)
-                {
-                    $inventory->activepurchaseOrderFlag = 1;
+            if ($inventory['purchaseLogs']) {
+                foreach ($inventory['purchaseLogs'] as $purchaseLog) {
+                    if ($purchaseLog->purchaseOrder->status == 1) {
+                        $inventory->hasActivePurchaseOrderFlag = 1;
+                    }
                 }
-            }
             }
             return $inventory;
         });
@@ -65,7 +54,7 @@ class InventoryController extends Controller
     }
     public function getInventoryDetails($id)
     {
-        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory','purchaseLogs')->where('id', $id)->first();
+        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory', 'purchaseLogs.purchaseOrder.vendor')->where('id', $id)->first();
     }
 
     public function addUpdateInventory(Request $request)
@@ -82,9 +71,8 @@ class InventoryController extends Controller
             $vendorId = $request->input('vendorId');
 
             if ($addUpdateFlag == 0) {
-                $nameExist = Inventory::where('name',$name)->first();
-                if($nameExist)
-                {
+                $nameExist = Inventory::where('name', $name)->first();
+                if ($nameExist) {
                     return response()->json([
                         'status' => 'error',
                         'message' => 'Same Item Name Exist',
@@ -113,24 +101,23 @@ class InventoryController extends Controller
             } else {
                 $inventoryExists = Inventory::where('id', $inventoryId)->first();
                 if ($inventoryExists) {
-                    $nameExist = Inventory::where('name',$name)->where('id','!=',$inventoryExists->id)->first();
-                if($nameExist)
-                {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Same Item Name Exist',
-                    ], 400);
-                }
+                    $nameExist = Inventory::where('name', $name)->where('id', '!=', $inventoryExists->id)->first();
+                    if ($nameExist) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Same Item Name Exist',
+                        ], 400);
+                    }
                     $inventoryExists->update([
                         'name' => $name,
                         'description' => $description,
                         'quantity' => $quantity,
                         'reminder_quantity' => $reminderQuantity,
                         'price' => $price,
-                        'category_id'=>$categoryId
+                        'category_id' => $categoryId
                     ]);
 
-                    InventoryDetail::where('inventory_id',$inventoryExists->id)->update(['vendor_id'=>$vendorId,'quantity'=>$quantity,'price'=>$price]);
+                    InventoryDetail::where('inventory_id', $inventoryExists->id)->update(['vendor_id' => $vendorId, 'quantity' => $quantity, 'price' => $price]);
                     return response()->json([
                         'status' => 'success',
                         'message' => 'Item updated successfully',

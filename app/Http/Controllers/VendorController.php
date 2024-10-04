@@ -6,31 +6,27 @@ use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
-    public function getVendors($skey,$sortkey,$sflag,$page,$limit)
+    public function getVendors($skey, $sortkey, $sflag, $page, $limit)
     {
-        $allVendors =  Vendor::with('inventoryDetails.inventory')->where('status',1);
+        $allVendors = Vendor::with('inventoryDetails.inventory')->where('status', 1);
 
-        if($skey != 'null')
-        {
-            $allVendors->where('name','like',"%$skey%")
-            ->orWhere('email','like',"%$skey%")
-            ->orWhere('company_name','like',"%$skey%")
-            ->orWhereHas('inventoryDetails', function ($query) use ($skey) {
-                $query->whereHas('inventory',function ($subquery) use ($skey)
-                {
-                    $subquery->where('name','like',"%$skey%");
+        if ($skey != 'null') {
+            $allVendors->where('name', 'like', "%$skey%")
+                ->orWhere('email', 'like', "%$skey%")
+                ->orWhere('company_name', 'like', "%$skey%")
+                ->orWhereHas('inventoryDetails', function ($query) use ($skey) {
+                    $query->whereHas('inventory', function ($subquery) use ($skey) {
+                        $subquery->where('name', 'like', "%$skey%");
+                    });
                 });
-            });
         }
 
-        if($sortkey != 'null')
-        {
-            $allVendors->orderBy($sortkey,$sflag);
+        if ($sortkey != 'null') {
+            $allVendors->orderBy($sortkey, $sflag);
+        } else {
+            $allVendors->orderBy('id', 'desc');
         }
-        else{
-            $allVendors->orderBy('id','desc');
-        }
-     return $allVendors->paginate($limit,['*'],'page',$page);
+        return $allVendors->paginate($limit, ['*'], 'page', $page);
     }
 
     public function getVendorDetails($vid)
@@ -50,7 +46,7 @@ class VendorController extends Controller
             $vendorId = $request->input('vendorId');
 
             if ($addUpdateFlag == 0) {
-                $checkEmailExists = Vendor::where( 'email', $email)->first();
+                $checkEmailExists = Vendor::where('email', $email)->first();
                 if ($checkEmailExists) {
                     return response()->json([
                         'status' => 'error',
@@ -101,7 +97,7 @@ class VendorController extends Controller
     public function deleteVendor($vid)
     {
         try {
-            Vendor::where('id', $vid)->update(['status'=>2]);
+            Vendor::where('id', $vid)->update(['status' => 2]);
             return 'success';
         } catch (\Exception $e) {
             return $e->getMessage();
@@ -110,6 +106,6 @@ class VendorController extends Controller
 
     public function getVendorsData()
     {
-       return Vendor::with('inventoryDetails.inventory')->where('status',1)->get();
+        return Vendor::with('inventoryDetails.inventory')->where('status', 1)->get();
     }
 }

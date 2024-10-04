@@ -14,7 +14,8 @@ class PurchaseOrder extends Model
     'vendor_id',
     'total_amount',
     'status',
-    'po_pdf'
+    'po_pdf',
+    'delivery_date'
  ];
 
     public function purchaseInventories()
