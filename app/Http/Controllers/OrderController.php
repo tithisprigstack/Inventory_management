@@ -39,7 +39,7 @@ class OrderController extends Controller
                     $newPurchaseOrderItem = new PurchaseOrderItem();
                     $newPurchaseOrderItem->purchase_order_id = $newPurchaseOrder->id;
                     $newPurchaseOrderItem->inventory_id = $inventoryDetail['inventoryId'];
-                    $newPurchaseOrderItem->quantity = $inventoryDetail['reminderQuantity'];
+                    $newPurchaseOrderItem->ordered_quantity = $inventoryDetail['reminderQuantity'];
                     $newPurchaseOrderItem->price = $inventory->price;
                     $newPurchaseOrderItem->save();
                     $total_amount += $inventoryDetail['reminderQuantity'] * $inventory->price;
@@ -127,9 +127,6 @@ class OrderController extends Controller
                         $Inventory->quantity += $purchaseOrderItem->quantity;
                         $Inventory->save();
                     }
-                } else {
-                    Log::error("we have skip po which is once received");
-                    continue;
                 }
             }
             return response()->json([
