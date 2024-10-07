@@ -55,11 +55,11 @@ class OrderController extends Controller
                 Storage::disk('public')->put($filename, $pdf->output());
                 $path = public_path('documents/' . $filename);
                 $newPurchaseOrder->update(['po_pdf' => $filename]);
-                // try {
-                //     Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
-                // } catch (\Exception $e) {
-                //     Log::error("Mail sending failed: " . $e->getMessage());
-                // }
+                try {
+                    Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
+                } catch (\Exception $e) {
+                    Log::error("Mail sending failed: " . $e->getMessage());
+                }
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Purchased order generated successfully',
@@ -113,26 +113,66 @@ class OrderController extends Controller
     public function updateOrderQuantity(Request $request)
     {
         try {
-            $poIds = $request->input('poIds');
+        $poId = $request->input('poId');
+        $orderItemDetails = $request->input('orderItemDetails');
 
-            foreach ($poIds as $poId) {
-                $purchaseOrder = PurchaseOrder::where('id', $poId)->where('status', 1)->first();
+        $purchaseOrder = PurchaseOrder::where('id', $poId)->whereIn('status', [1, 2])->first();
 
-                if ($purchaseOrder) {
-                    $purchaseOrder->update(['status' => 2, 'delivery_date' => date("Y-m-d")]);
-                    $purchaseOrderItems = PurchaseOrderItem::where('purchase_order_id', $purchaseOrder->id)->get();
+        if ($purchaseOrder) {
+            $poReceivedFlag = true;
+            $poPartialReceivedFlag = false;
 
-                    foreach ($purchaseOrderItems as $purchaseOrderItem) {
+            foreach ($orderItemDetails as $orderItemDetail) {
+
+                $purchaseOrderItem = PurchaseOrderItem::where('id', $orderItemDetail['itemId'])->first();
+
+                if ($purchaseOrderItem) {
+                    $currentReceivedQuantity = $purchaseOrderItem->current_received_quantity;
+                    $orderedQuantity = $purchaseOrderItem->ordered_quantity;
+                    $newReceivedQuantity = $orderItemDetail['itemQuantity'];
+
+                    if (($newReceivedQuantity + $currentReceivedQuantity) <= $orderedQuantity) {
+                        $purchaseOrderItem->current_received_quantity += $newReceivedQuantity;
+                        $purchaseOrderItem->save();
+
                         $Inventory = Inventory::where('id', $purchaseOrderItem->inventory_id)->first();
-                        $Inventory->quantity += $purchaseOrderItem->quantity;
+                        $Inventory->quantity += $newReceivedQuantity;
                         $Inventory->save();
+
+                        if ($purchaseOrderItem->current_received_quantity < $purchaseOrderItem->ordered_quantity) {
+                            $poPartialReceivedFlag = true;
+                            $poReceivedFlag = false;
+                        }
+                    } else {
+                        Log::error("given order item has exceed the purchase order item order quantity");
+                        continue;
                     }
+                } else {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'given order item not found',
+                    ], 400);
                 }
             }
+            if ($poPartialReceivedFlag) {
+                $purchaseOrder->status = 2;
+            } elseif ($poReceivedFlag) {
+                $purchaseOrder->status = 3;
+            }
+
+            $purchaseOrder->delivery_date = date("Y-m-d");
+            $purchaseOrder->save();
             return response()->json([
                 'status' => 'success',
-                'message' => 'Purchased order and their ordered quantity added to inventory item',
+                'message' => 'Purchase order quantities successfully updated in inventory.'
             ], 200);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'purchase order for this id has not found or already received',
+            ], 400);
+        }
+
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
