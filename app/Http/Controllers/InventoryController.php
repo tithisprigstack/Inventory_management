@@ -43,7 +43,7 @@ class InventoryController extends Controller
             }
             if ($inventory['purchaseLogs']) {
                 foreach ($inventory['purchaseLogs'] as $purchaseLog) {
-                    if ($purchaseLog->purchaseOrder->status == 1) {
+                    if ($purchaseLog->purchaseOrder->status == 1 || $purchaseLog->purchaseOrder->status == 2) {
                         $inventory->hasActivePurchaseOrderFlag = 1;
                     }
                 }

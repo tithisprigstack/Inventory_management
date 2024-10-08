@@ -55,11 +55,11 @@ class OrderController extends Controller
                 Storage::disk('public')->put($filename, $pdf->output());
                 $path = public_path('documents/' . $filename);
                 $newPurchaseOrder->update(['po_pdf' => $filename]);
-                try {
-                    Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
-                } catch (\Exception $e) {
-                    Log::error("Mail sending failed: " . $e->getMessage());
-                }
+                // try {
+                //     Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
+                // } catch (\Exception $e) {
+                //     Log::error("Mail sending failed: " . $e->getMessage());
+                // }
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Purchased order generated successfully',
