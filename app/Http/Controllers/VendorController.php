@@ -31,7 +31,7 @@ class VendorController extends Controller
 
     public function getVendorDetails($vid)
     {
-        return vendor::with('inventoryDetails')->where('id', $vid)->first();
+        return vendor::with('inventoryDetails.inventory')->where('id', $vid)->first();
     }
 
     public function addUpdateVendor(Request $request)
@@ -50,7 +50,7 @@ class VendorController extends Controller
                 if ($checkEmailExists) {
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'Email is unique for all vendor',
+                        'message' => 'This email is already exists with some vendor!',
                     ], 400);
                 }
                 $newVendor = new Vendor();
@@ -68,6 +68,13 @@ class VendorController extends Controller
             } else {
                 $vendorExists = Vendor::where('id', $vendorId)->first();
                 if ($vendorExists) {
+                    $checkEmailExists = Vendor::where('email', $email)->where('id','!=',$vendorExists->id)->first();
+                if ($checkEmailExists) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'This email is already exists with other vendor',
+                    ], 400);
+                }
                     $vendorExists->update([
                         'name' => $name,
                         'contact_num' => $contactNum,
@@ -77,12 +84,12 @@ class VendorController extends Controller
                     ]);
                     return response()->json([
                         'status' => 'success',
-                        'message' => 'vendor details updated successfully',
+                        'message' => 'Vendor details updated successfully',
                     ], 200);
                 } else {
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'vendor not Found',
+                        'message' => 'Vendor with this id do not exist',
                     ], 400);
                 }
             }

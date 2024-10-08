@@ -90,6 +90,7 @@
         <div class="vendor-details">
             <p><strong>Vendor Name:</strong> {{ $data['vendorDetails']['name'] ?? '-' }}</p>
             <p><strong>Contact Number:</strong> {{ $data['vendorDetails']['contact_num'] ?? '-' }}</p>
+            <p><strong>Email:</strong> {{ $data['vendorDetails']['email'] ?? '-' }}</p>
             <p><strong>Address:</strong> {{ $data['vendorDetails']['address'] ?? '-' }}</p>
         </div>
     </div>
@@ -107,9 +108,9 @@
         @foreach ($data['inventoryDetails'] as $inventory)
             <tr>
                 <td>{{ $inventory['inventory']['name'] }}</td>
-                <td>{{ $inventory['poItemDetails']['quantity'] ?? '-' }}</td>
+                <td>{{ $inventory['poItemDetails']['ordered_quantity'] ?? '-' }}</td>
                 <td>Rs.{{ $inventory['poItemDetails']['price']  }}</td>
-                <td>Rs.{{ number_format(($inventory['poItemDetails']['quantity'] ) * ($inventory['poItemDetails']['price'] ),2) }}</td>
+                <td>Rs.{{ number_format(($inventory['poItemDetails']['ordered_quantity'] ) * ($inventory['poItemDetails']['price'] ),2) }}</td>
             </tr>
         @endforeach
         </tbody>
@@ -117,7 +118,7 @@
 
     <div class="table-summary">
         <p><strong>Total Price:</strong> Rs. {{ number_format(array_sum(array_map(function($inventory) {
-            return ($inventory['poItemDetails']['quantity']) * ($inventory['poItemDetails']['price']);
+            return ($inventory['poItemDetails']['ordered_quantity']) * ($inventory['poItemDetails']['price']);
         }, $data['inventoryDetails'])),2) }}</p>
     </div>
 </div>

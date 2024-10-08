@@ -75,7 +75,7 @@ class InventoryController extends Controller
                 if ($nameExist) {
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'Same Item Name Exist',
+                        'message' => 'Item with same name is already exists!',
                     ], 400);
                 }
                 $newInventory = new Inventory();
@@ -105,7 +105,7 @@ class InventoryController extends Controller
                     if ($nameExist) {
                         return response()->json([
                             'status' => 'error',
-                            'message' => 'Same Item Name Exist',
+                            'message' => 'Item with same name is already exists!',
                         ], 400);
                     }
                     $inventoryExists->update([
@@ -125,7 +125,7 @@ class InventoryController extends Controller
                 } else {
                     return response()->json([
                         'status' => 'error',
-                        'message' => 'Item not Found',
+                        'message' => 'Item with this id not found',
                     ], 400);
                 }
             }
@@ -141,6 +141,7 @@ class InventoryController extends Controller
     {
         try {
             Inventory::where('id', $id)->delete();
+            InventoryDetail::where('inventory_id', $id)->delete();
             return 'success';
         } catch (\Exception $e) {
             return $e->getMessage();

@@ -85,8 +85,10 @@ class OrderController extends Controller
         if ($skey != 'null') {
             if ($skey == 'pending') {
                 $purchaseData->where('status', 'like', 1);
-            } elseif ($skey == 'received') {
+            } elseif ($skey == 'partially received') {
                 $purchaseData->where('status', 'like', 2);
+            }elseif ($skey == 'received') {
+                $purchaseData->where('status', 'like', 3);
             } else {
                 $purchaseData->where('id', 'like', "%$skey%")
                     ->orWhere('total_amount', 'like', "%$skey%")
@@ -115,7 +117,7 @@ class OrderController extends Controller
         try {
         $poId = $request->input('poId');
         $orderItemDetails = $request->input('orderItemDetails');
-        $note = $request->input(key: 'note');
+        $note = $request->input('note');
 
         $purchaseOrder = PurchaseOrder::where('id', $poId)->whereIn('status', [1, 2])->first();
 
