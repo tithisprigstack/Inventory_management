@@ -144,6 +144,8 @@ class OrderController extends Controller
                             $poReceivedFlag = false;
                         }
                     } else {
+                        $poPartialReceivedFlag = true;
+                        $poReceivedFlag = false;
                         Log::error("given order item has exceed the purchase order item order quantity");
                         continue;
                     }
