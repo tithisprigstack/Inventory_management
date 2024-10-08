@@ -115,6 +115,7 @@ class OrderController extends Controller
         try {
         $poId = $request->input('poId');
         $orderItemDetails = $request->input('orderItemDetails');
+        $note = $request->input(key: 'note');
 
         $purchaseOrder = PurchaseOrder::where('id', $poId)->whereIn('status', [1, 2])->first();
 
@@ -163,6 +164,7 @@ class OrderController extends Controller
             }
 
             $purchaseOrder->delivery_date = date("Y-m-d");
+            $purchaseOrder->order_note = $note;
             $purchaseOrder->save();
             return response()->json([
                 'status' => 'success',
