@@ -8,9 +8,10 @@ class VendorController extends Controller
 {
     public function getVendors($skey, $sortkey, $sflag, $page, $limit)
     {
-        $allVendors = Vendor::with('inventoryDetails.inventory')->where('status', 1);
+        $allVendors = Vendor::with('inventoryDetails.inventory');
 
         if ($skey != 'null') {
+            $page = 1;
             $allVendors->where('name', 'like', "%$skey%")
                 ->orWhere('email', 'like', "%$skey%")
                 ->orWhere('company_name', 'like', "%$skey%")

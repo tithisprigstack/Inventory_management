@@ -5,6 +5,7 @@ use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\InventoryDetail;
 use App\Models\PurchaseOrderItem;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -13,28 +14,44 @@ class InventoryController extends Controller
     {
         return Category::all();
     }
-
     public function allInventories($skey, $sortkey, $sflag, $page, $limit)
     {
         $inventoryData = Inventory::with('category', 'inventoryDetail.vendor', 'purchaseLogs.purchaseOrder');
+
         if ($skey != 'null') {
-            $inventoryData->where('name', 'like', "%$skey%")
-                ->orWhereHas('category', function ($q) use ($skey) {
-                    $q->where('name', 'like', "%$skey%");
-                })
-                ->orWhereHas('inventoryDetail', function ($query) use ($skey) {
-                    $query->whereHas('vendor', function ($subquery) use ($skey) {
-                        $subquery->where('name', 'like', "%$skey%");
+            $page = 1;
+            $inventoryData->where(function ($query) use ($skey) {
+                $query->where('name', 'like', "%$skey%")
+                    ->orWhereHas('category', function ($q) use ($skey) {
+                        $q->where('name', 'like', "%$skey%");
+                    })
+                    ->orWhereHas('inventoryDetail', function ($query) use ($skey) {
+                        $query->whereHas('vendor', function ($subquery) use ($skey) {
+                            $subquery->where('name', 'like', "%$skey%");
+                        });
                     });
-                });
+            });
         }
 
+
         if ($sortkey != 'null') {
-            $inventoryData->orderBy($sortkey, $sflag);
+            if ($sortkey == 'vendorName') {
+                $inventoryData->join('inventory_details', 'inventories.id', '=', 'inventory_details.inventory_id')
+                    ->leftJoin('vendors', 'inventory_details.vendor_id', '=', 'vendors.id')
+                    ->select('inventories.*', 'vendors.name as vendor_name');
+                $inventoryData->orderBy('vendors.name', $sflag);
+            } else {
+
+                $inventoryData->orderBy("inventories.$sortkey", $sflag);
+            }
         } else {
-            $inventoryData->orderBy('id', 'desc');
+            $inventoryData->orderBy('inventories.id', 'desc');
         }
+
+
         $inventoryData = $inventoryData->paginate($limit, ['*'], 'page', $page);
+
+
         $inventoryData->getCollection()->transform(function ($inventory) {
             $inventory->needsPurchaseOrderFlag = 0;
             $inventory->hasActivePurchaseOrderFlag = 0;
@@ -43,19 +60,22 @@ class InventoryController extends Controller
             }
             if ($inventory['purchaseLogs']) {
                 foreach ($inventory['purchaseLogs'] as $purchaseLog) {
-                    if ($purchaseLog->purchaseOrder->status == 1 || $purchaseLog->purchaseOrder->status == 2) {
+                    if ($purchaseLog->purchaseOrder->status == 1) {
                         $inventory->hasActivePurchaseOrderFlag = 1;
                     }
                 }
             }
             return $inventory;
         });
+
         return $inventoryData;
     }
-    public function getInventoryDetails($id)
-    {
-        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory', 'purchaseLogs.purchaseOrder.vendor')->where('id', $id)->first();
-    }
+
+
+public function getInventoryDetails($id)
+{
+    return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory', 'purchaseLogs.purchaseOrder.vendor')->where('id', $id)->first();
+}
 
     public function addUpdateInventory(Request $request)
     {

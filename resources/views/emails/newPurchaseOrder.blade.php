@@ -33,7 +33,7 @@
             margin-bottom: 20px;
         }
         .header p {
-            margin: 0;
+            /* margin: 0; */
             font-size: 14px;
         }
         table {
@@ -68,7 +68,7 @@
             font-weight: bold;
         }
         .vendor-details p {
-            margin-bottom: 10px;
+            margin: 13px;
         }
         hr{
             margin: 20px 0;

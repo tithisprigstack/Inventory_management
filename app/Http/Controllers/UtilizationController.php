@@ -49,11 +49,11 @@ class UtilizationController extends Controller
                         'userDetails' => $user,
                         'inventoryDetails' => $checkInventory
                     ];
-                    // try {
-                    //     Mail::to($user->email)->send(new LowStockReminderMail($data));
-                    // } catch (\Exception $e) {
-                    //     Log::error("Mail sending failed: " . $e->getMessage());
-                    // }
+                    try {
+                        Mail::to($user->email)->send(new LowStockReminderMail($data));
+                    } catch (\Exception $e) {
+                        Log::error("Mail sending failed: " . $e->getMessage());
+                    }
                 }
 
                 return response()->json([

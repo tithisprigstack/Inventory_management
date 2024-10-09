@@ -27,4 +27,9 @@ class PurchaseOrder extends Model
     {
        return  $this->belongsTo(Vendor::class,'vendor_id','id');
     }
+
+    public function purchaseReceiveLogs()
+    {
+        return  $this->hasMany(PurchaseReceiveLog::class,'purchase_order_id','id');
+    }
 }
