@@ -27,3 +27,4 @@ Route::post('/add-inventory-utilization',[UtilizationController::class,'addInven
 Route::get('/all-purchase-orders/{statusflag}&{skey}&{sortKey}&{sflag}&{page}&{limit}',[OrderController::class,'allPurchaseOrders']);
 Route::get('/get-purchase-order-details/{pid}',[OrderController::class,'poDetails']);
 Route::post('/update-order-quantity',[OrderController::class,'updateOrderQuantity']);
+Route::get('/received-purchase-order-details/{poid}',[OrderController::class,'recivedPoDetails']);

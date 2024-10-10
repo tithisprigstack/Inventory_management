@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Mail\LowStockReminderMail;
 use App\Models\Inventory;
 use App\Models\InventoryUsage;
+use App\Models\InventoryDetail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -27,6 +28,11 @@ class UtilizationController extends Controller
                 $checkInventory->quantity -= $quantity;
                 $checkInventory->save();
 
+
+                $inventoryDetails = InventoryDetail::where('inventory_id', $checkInventory->id)->first();
+
+                $inventoryDetails->quantity -= $quantity;
+                $inventoryDetails->save();
                 $newInventoryUsge = new InventoryUsage();
                 $newInventoryUsge->inventory_id = $checkInventory->id;
                 $newInventoryUsge->usage_purpose = $usagePurpose;

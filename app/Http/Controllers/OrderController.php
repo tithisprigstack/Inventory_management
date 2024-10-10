@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use App\Models\PurchaseOrderItem;
+use App\Models\InventoryDetail;
 use App\Models\PurchaseReceiveLog;
 use App\Models\PurchaseOrderProduct;
 use App\Models\Vendor;
@@ -151,6 +152,11 @@ class OrderController extends Controller
                             $inventory->quantity += $newReceivedQuantity;
                             $inventory->save();
                         }
+
+                        $inventoryDetails = InventoryDetail::where('inventory_id', $inventory->id)->first();
+
+                        $inventoryDetails->quantity += $newReceivedQuantity;
+                        $inventoryDetails->save();
                         if ($purchaseOrderItem->current_received_quantity < $orderedQuantity) {
                             $poReceivedFlag = false;
                         }
@@ -197,5 +203,10 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->customJson('error', $e->getMessage(), 400);
         }
+    }
+
+    public function recivedPoDetails($poId)
+    {
+        return PurchaseReceiveLog::with('purchaseOrderItem.inventory')->where('purchase_order_id', $poId)->get();
     }
 }
