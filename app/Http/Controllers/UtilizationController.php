@@ -25,6 +25,14 @@ class UtilizationController extends Controller
             if ($checkInventory->quantity < $quantity) {
                 return response()->customJson('error', 'This item does not have enough stock to fulfil your utilization quantity request', 400);
             } else {
+                $newInventoryUsge = new InventoryUsage();
+                $newInventoryUsge->inventory_id = $checkInventory->id;
+                $newInventoryUsge->original_quantity = $checkInventory->quantity;
+                $newInventoryUsge->usage_purpose = $usagePurpose;
+                $newInventoryUsge->used_quantity = $quantity;
+                $newInventoryUsge->used_date = $usedDate;
+                $newInventoryUsge->save();
+
                 $checkInventory->quantity -= $quantity;
                 $checkInventory->save();
 
@@ -33,12 +41,7 @@ class UtilizationController extends Controller
 
                 $inventoryDetails->quantity -= $quantity;
                 $inventoryDetails->save();
-                $newInventoryUsge = new InventoryUsage();
-                $newInventoryUsge->inventory_id = $checkInventory->id;
-                $newInventoryUsge->usage_purpose = $usagePurpose;
-                $newInventoryUsge->quantity = $quantity;
-                $newInventoryUsge->used_date = $usedDate;
-                $newInventoryUsge->save();
+
 
                 $user = User::find(1);
                 if ($checkInventory->quantity < $checkInventory->reminder_quantity) {

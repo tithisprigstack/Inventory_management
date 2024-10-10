@@ -11,9 +11,10 @@ class InventoryUsage extends Model
     use HasFactory,SoftDeletes;
 
  protected $fillable = [
-    'quantity',
+    'used_quantity',
     'inventory_id',
-    'used_date'
+    'used_date',
+    'original_quantity'
  ];
     public function inventory()
     {

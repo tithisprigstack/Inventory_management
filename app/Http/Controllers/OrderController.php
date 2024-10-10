@@ -164,7 +164,7 @@ class OrderController extends Controller
                         $newPurchaseOrderItem->purchase_order_id = $purchaseOrder->id;
                         $newPurchaseOrderItem->purchase_order_item_id = $purchaseOrderItem->id;
                         $newPurchaseOrderItem->remaining_ordered_quantity = $remainingQty;
-                        $newPurchaseOrderItem->received_quantity = $receivedQuantity;
+                        $newPurchaseOrderItem->received_quantity = $newReceivedQuantity;
                         $newPurchaseOrderItem->extra_quantity = $extraReceived;
                         $newPurchaseOrderItem->save();
                     } else {
