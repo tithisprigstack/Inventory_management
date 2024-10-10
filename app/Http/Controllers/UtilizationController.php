@@ -22,17 +22,8 @@ class UtilizationController extends Controller
 
             $checkInventory = Inventory::where('id', $inventoryId)->first();
             if ($checkInventory->quantity < $quantity) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'This item does not have enough stock to fulfil your utilization quantity request',
-                ], 400);
-            } elseif ($checkInventory->quantity < $checkInventory->reminder_quantity) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'This item is below the reminder quantity first order new quantity to utilize item',
-                ], 400);
+                return response()->customJson('error', 'This item does not have enough stock to fulfil your utilization quantity request', 400);
             } else {
-
                 $checkInventory->quantity -= $quantity;
                 $checkInventory->save();
 
@@ -55,17 +46,10 @@ class UtilizationController extends Controller
                         Log::error("Mail sending failed: " . $e->getMessage());
                     }
                 }
-
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Utilization data added successfully',
-                ], 200);
+                return response()->customJson('success', 'Utilization data added successfully', 200);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->customJson('error', $e->getMessage(), 400);
         }
     }
 }

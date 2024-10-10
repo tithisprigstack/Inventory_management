@@ -16,7 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use League\CommonMark\Node\Block\Document;
 use PDF;
+use File;
 
 class OrderController extends Controller
 {
@@ -53,62 +55,51 @@ class OrderController extends Controller
                     'inventoryDetails' => $inventoryData,
                 ];
                 $user = User::find(1);
-                $filename = $user->id .'/'.'PurchaseOrders/' . $newPurchaseOrder->id . '_' . time() . '.pdf';
+                $filename = $user->id . '/' . 'PurchaseOrders/' . $newPurchaseOrder->id . '_' . time() . '.pdf';
                 $pdf = PDF::loadView('emails.newPurchaseOrder', compact('data'));
                 Storage::disk('public')->put($filename, $pdf->output());
-                $path = public_path('documents/'. $filename);
+                $path = public_path('documents/' . $filename);
                 $newPurchaseOrder->update(['po_pdf' => $filename]);
                 // try {
                 //     Mail::to($checkVendor->email)->send(new SendOrderToVendorMail($path,$data));
                 // } catch (\Exception $e) {
                 //     Log::error("Mail sending failed: " . $e->getMessage());
                 // }
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Purchased order generated successfully',
-                ], 200);
+                return response()->customJson('success', 'Purchased order generated successfully', 200);
             } else {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'This Vendor is currently not active',
-                ], 400);
+                return response()->customJson('error', 'This Vendor is currently not active', 400);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->customJson('error', $e->getMessage(), 400);
         }
     }
 
     public function allPurchaseOrders($statusflag, $skey, $sortKey, $sflag, $page, $limit)
     {
-        $purchaseData = PurchaseOrder::with('purchaseInventories.inventory', 'vendor','purchaseReceiveLogs');
+        $purchaseData = PurchaseOrder::with('purchaseInventories.inventory', 'vendor', 'purchaseReceiveLogs');
         if ($statusflag == 1) {
-    $purchaseData->where('purchase_orders.status',1);
+            $purchaseData->where('purchase_orders.status', 1);
         } else {
-            $purchaseData->where('purchase_orders.status',2);
+            $purchaseData->where('purchase_orders.status', 2);
         }
         if ($skey != 'null') {
-                $purchaseData->where('id', 'like', "%$skey%")
-                    ->orWhere('total_amount', 'like', "%$skey%")
-                    ->orWhereHas('vendor', function ($q) use ($skey) {
-                        $q->where('name', 'like', "%$skey%");
-                    });
-    }
+            $purchaseData->where('id', 'like', "%$skey%")
+                ->orWhere('total_amount', 'like', "%$skey%")
+                ->orWhereHas('vendor', function ($q) use ($skey) {
+                    $q->where('name', 'like', "%$skey%");
+                });
+        }
         if ($sortKey != 'null') {
-            if($sortKey == 'vendorName')
-            {
-                $purchaseData->join('vendors', 'purchase_orders.vendor_id', '=', 'vendors.id')
-                         ->orderBy('vendors.name', $sflag);
-            }
-            else
-            {
-                $purchaseData->orderBy($sortKey, $sflag);
+            if ($sortKey == 'vendorName') {
+                $purchaseData->leftJoin('vendors', 'purchase_orders.vendor_id', '=', 'vendors.id')
+                    ->orderBy('vendors.name', $sflag)
+                    ->select('purchase_orders.*');
+            } else {
+                $purchaseData->orderBy("purchase_orders.$sortKey", $sflag);
             }
 
         } else {
-            $purchaseData->orderBy('id', 'desc');
+            $purchaseData->orderBy('purchase_orders.id', 'desc');
         }
 
         return $purchaseData->paginate($limit, ['*'], 'page', $page);
@@ -117,88 +108,94 @@ class OrderController extends Controller
 
     public function poDetails($pid)
     {
-        return PurchaseOrder::with('purchaseInventories.inventory', 'vendor','purchaseReceiveLogs')->where('id', $pid)->first();
+        return PurchaseOrder::with('purchaseInventories.inventory', 'vendor', 'purchaseReceiveLogs')->where('id', $pid)->first();
     }
 
     public function updateOrderQuantity(Request $request)
     {
-        $poId = $request->input('poId');
-        $orderItemDetails = $request->input('orderItemDetails');
-        $note = $request->input('note');
+        try {
+            $poId = $request->input('poId');
+            $orderItemDetails = $request->input('orderItemDetails');
+            $note = $request->input('note');
+            $receipt = $request->input('receipt');
 
-        $purchaseOrder = PurchaseOrder::where('id', $poId)->where('status', 1)->first();
 
-        if ($purchaseOrder) {
-            $poReceivedFlag = true;
+            $purchaseOrder = PurchaseOrder::where('id', $poId)->where('status', 1)->first();
 
-            foreach ($orderItemDetails as $orderItemDetail) {
-                $purchaseOrderItem = PurchaseOrderItem::where('id', $orderItemDetail['itemId'])->first();
+            if ($purchaseOrder) {
+                $poReceivedFlag = true;
 
-                if ($purchaseOrderItem) {
-                    $orderedQuantity = $purchaseOrderItem->ordered_quantity;
-                    $currentReceivedQuantity = $purchaseOrderItem->current_received_quantity;
-                    $newReceivedQuantity = $orderItemDetail['itemQuantity'];
-                    $remainingQty = $orderedQuantity - $currentReceivedQuantity;
+                foreach ($orderItemDetails as $orderItemDetail) {
+                    $purchaseOrderItem = PurchaseOrderItem::where('id', $orderItemDetail['itemId'])->first();
 
-                    if( $newReceivedQuantity == 0)
-                    {
-                        continue;
+                    if ($purchaseOrderItem) {
+                        $orderedQuantity = $purchaseOrderItem->ordered_quantity;
+                        $currentReceivedQuantity = $purchaseOrderItem->current_received_quantity;
+                        $newReceivedQuantity = $orderItemDetail['itemQuantity'];
+                        $remainingQty = $orderedQuantity - $currentReceivedQuantity;
+
+                        if ($newReceivedQuantity == 0) {
+                            continue;
+                        }
+
+                        $isOverReceived = ($currentReceivedQuantity + $newReceivedQuantity) > $orderedQuantity;
+                        $receivedQuantity = $isOverReceived ? $remainingQty : $newReceivedQuantity;
+                        $extraReceived = $isOverReceived ? $newReceivedQuantity - $remainingQty : 0;
+
+                        $purchaseOrderItem->current_received_quantity += $receivedQuantity;
+                        $purchaseOrderItem->extra_received_quantitty = $extraReceived;
+                        $purchaseOrderItem->save();
+
+                        $inventory = Inventory::where('id', $purchaseOrderItem->inventory_id)->first();
+                        if ($inventory) {
+                            $inventory->quantity += $newReceivedQuantity;
+                            $inventory->save();
+                        }
+                        if ($purchaseOrderItem->current_received_quantity < $orderedQuantity) {
+                            $poReceivedFlag = false;
+                        }
+                        $newPurchaseOrderItem = new PurchaseReceiveLog();
+                        $newPurchaseOrderItem->purchase_order_id = $purchaseOrder->id;
+                        $newPurchaseOrderItem->purchase_order_item_id = $purchaseOrderItem->id;
+                        $newPurchaseOrderItem->remaining_ordered_quantity = $remainingQty;
+                        $newPurchaseOrderItem->received_quantity = $receivedQuantity;
+                        $newPurchaseOrderItem->extra_quantity = $extraReceived;
+                        $newPurchaseOrderItem->save();
+                    } else {
+                        return response()->customJson('error', 'Given order item not found', 400);
                     }
-
-                    $isOverReceived = ($currentReceivedQuantity + $newReceivedQuantity) > $orderedQuantity;
-                    $receivedQuantity = $isOverReceived ? $remainingQty : $newReceivedQuantity;
-                    $extraReceived = $isOverReceived ? $newReceivedQuantity - $remainingQty : 0;
-
-                    $purchaseOrderItem->current_received_quantity += $receivedQuantity;
-                    $purchaseOrderItem->extra_received_quantitty = $extraReceived;
-                    $purchaseOrderItem->save();
-
-                            $inventory = Inventory::where('id', $purchaseOrderItem->inventory_id)->first();
-                            if ($inventory) {
-                                $inventory->quantity += $newReceivedQuantity;
-                                $inventory->save();
-                            }
-                            if ($purchaseOrderItem->current_received_quantity < $orderedQuantity) {
-                                $poReceivedFlag = false;
-                            }
-                            $newPurchaseOrderItem = new PurchaseReceiveLog();
-                            $newPurchaseOrderItem->purchase_order_id = $purchaseOrder->id;
-                            $newPurchaseOrderItem->purchase_order_item_id = $purchaseOrderItem->id;
-                            $newPurchaseOrderItem->remaining_ordered_quantity = $remainingQty;
-                            $newPurchaseOrderItem->received_quantity = $receivedQuantity;
-                            $newPurchaseOrderItem->extra_quantity = $extraReceived;
-                            $newPurchaseOrderItem->save();
                 }
-                else {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'given order item not found',
-                ], 400);
-            }
-        }
-            if($poReceivedFlag == true)
-            {
-                $purchaseOrder->status = 2;
-            }
-            else{
-                $purchaseOrder->status = 1;
+                $purchaseOrder->status = $poReceivedFlag ? 2 : 1;
+
+                $user = User::find(1);
+
+                $receiptPath = null;
+                if ($receipt != null) {
+                    if ($purchaseOrder->receipt != null) {
+                        File::delete(public_path('documents/' . $purchaseOrder->receipt));
+                    }
+                    if (strpos($receipt, 'data:application/pdf;base64,') == 0) {
+                        $receipt = substr($receipt, strlen('data:application/pdf;base64,'));
+                    }
+                    $decodereceipt = base64_decode($receipt);
+                    $filename = $user->id . '/' . 'POReceipts/' . $purchaseOrder->id . '_' . time() . '.pdf';
+                    Storage::disk('public')->put($filename, $decodereceipt);
+                    $path = public_path('documents/' . $filename);
+                    $receiptPath = $filename;
+                }
+
+                $purchaseOrder->receipt = $receiptPath;
+                $purchaseOrder->delivery_date = date("Y-m-d");
+                $purchaseOrder->order_note = $note;
+                $purchaseOrder->save();
+
+                return response()->customJson('success', 'Purchase order quantities successfully updated in inventory.', 200);
+            } else {
+                return response()->customJson('error', 'purchase order for this id has not found or already received', 400);
             }
 
-            $purchaseOrder->delivery_date = date("Y-m-d");
-            $purchaseOrder->order_note = $note;
-            $purchaseOrder->save();
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Purchase order quantities successfully updated in inventory.'
-            ], 200);
+        } catch (\Exception $e) {
+            return response()->customJson('error', $e->getMessage(), 400);
         }
-        else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'purchase order for this id has not found or already received',
-            ], 400);
-        }
-
     }
 }

@@ -49,10 +49,7 @@ class VendorController extends Controller
             if ($addUpdateFlag == 0) {
                 $checkEmailExists = Vendor::where('email', $email)->first();
                 if ($checkEmailExists) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'This email is already exists with some vendor!',
-                    ], 400);
+                    return response()->customJson('error', 'This email is already exists with some vendor!', 400);
                 }
                 $newVendor = new Vendor();
                 $newVendor->name = $name;
@@ -62,20 +59,14 @@ class VendorController extends Controller
                 $newVendor->company_name = $companyName;
                 $newVendor->status = 1;
                 $newVendor->save();
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Vendor details added successfully',
-                ], 200);
+                return response()->customJson('success', 'Vendor details added successfully', 200);
             } else {
                 $vendorExists = Vendor::where('id', $vendorId)->first();
                 if ($vendorExists) {
-                    $checkEmailExists = Vendor::where('email', $email)->where('id','!=',$vendorExists->id)->first();
-                if ($checkEmailExists) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'This email is already exists with other vendor',
-                    ], 400);
-                }
+                    $checkEmailExists = Vendor::where('email', $email)->where('id', '!=', $vendorExists->id)->first();
+                    if ($checkEmailExists) {
+                        return response()->customJson('error', 'This email is already exists with other vendor', 400);
+                    }
                     $vendorExists->update([
                         'name' => $name,
                         'contact_num' => $contactNum,
@@ -83,22 +74,13 @@ class VendorController extends Controller
                         'address' => $address,
                         'company_name' => $companyName,
                     ]);
-                    return response()->json([
-                        'status' => 'success',
-                        'message' => 'Vendor details updated successfully',
-                    ], 200);
+                    return response()->customJson('success', 'Vendor details updated successfully', 200);
                 } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Vendor with this id do not exist',
-                    ], 400);
+                    return response()->customJson('error', 'Vendor with this id do not exist', 400);
                 }
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->customJson('error', $e->getMessage(), 400);
         }
     }
 

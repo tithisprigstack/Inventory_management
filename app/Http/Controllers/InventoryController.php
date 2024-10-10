@@ -72,10 +72,10 @@ class InventoryController extends Controller
     }
 
 
-public function getInventoryDetails($id)
-{
-    return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory', 'purchaseLogs.purchaseOrder.vendor')->where('id', $id)->first();
-}
+    public function getInventoryDetails($id)
+    {
+        return Inventory::with('inventoryDetail.vendor', 'category', 'usageHistory', 'purchaseLogs.purchaseOrder.vendor')->where('id', $id)->first();
+    }
 
     public function addUpdateInventory(Request $request)
     {
@@ -93,10 +93,7 @@ public function getInventoryDetails($id)
             if ($addUpdateFlag == 0) {
                 $nameExist = Inventory::where('name', $name)->first();
                 if ($nameExist) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Item with same name is already exists!',
-                    ], 400);
+                    return response()->customJson('error', 'Item with same name is already exists!', 400);
                 }
                 $newInventory = new Inventory();
                 $newInventory->name = $name;
@@ -114,19 +111,13 @@ public function getInventoryDetails($id)
                 $newInventoryDetails->price = $price;
                 $newInventoryDetails->save();
 
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Item added successfully',
-                ], 200);
+                return response()->customJson('success', 'Item added successfully', 200);
             } else {
                 $inventoryExists = Inventory::where('id', $inventoryId)->first();
                 if ($inventoryExists) {
                     $nameExist = Inventory::where('name', $name)->where('id', '!=', $inventoryExists->id)->first();
                     if ($nameExist) {
-                        return response()->json([
-                            'status' => 'error',
-                            'message' => 'Item with same name is already exists!',
-                        ], 400);
+                        return response()->customJson('error', 'Item with same name is already exists!', 400);
                     }
                     $inventoryExists->update([
                         'name' => $name,
@@ -138,22 +129,13 @@ public function getInventoryDetails($id)
                     ]);
 
                     InventoryDetail::where('inventory_id', $inventoryExists->id)->update(['vendor_id' => $vendorId, 'quantity' => $quantity, 'price' => $price]);
-                    return response()->json([
-                        'status' => 'success',
-                        'message' => 'Item updated successfully',
-                    ], 200);
+                    return response()->customJson('success', 'Item updated successfully', 200);
                 } else {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Item with this id not found',
-                    ], 400);
+                    return response()->customJson('error', 'Item with this id not found', 400);
                 }
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $e->getMessage(),
-            ], 400);
+            return response()->customJson('error', $e->getMessage(), 400);
         }
     }
 
