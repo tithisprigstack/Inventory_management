@@ -28,3 +28,4 @@ Route::get('/all-purchase-orders/{statusflag}&{skey}&{sortKey}&{sflag}&{page}&{l
 Route::get('/get-purchase-order-details/{pid}',[OrderController::class,'poDetails']);
 Route::post('/update-order-quantity',[OrderController::class,'updateOrderQuantity']);
 Route::get('/received-purchase-order-details/{poid}',[OrderController::class,'recivedPoDetails']);
+// Route::get('/check-low-stock',[UtilizationController::class,'checkLowStock']);

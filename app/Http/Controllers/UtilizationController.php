@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Jobs\SendEmailJob;
 use App\Mail\LowStockReminderMail;
 use App\Models\Inventory;
 use App\Models\InventoryUsage;
 use App\Models\InventoryDetail;
 use App\Models\User;
+use Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -60,5 +62,18 @@ class UtilizationController extends Controller
         } catch (\Exception $e) {
             return response()->customJson('error', $e->getMessage(), 400);
         }
+    }
+
+    public function checkLowStock()
+    {
+        SendEmailJob::dispatchSync();
+        // Artisan::call('app:send-emails');
+        // $output = Artisan::output();
+
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'send mails successfully!',
+        //     'output' => $output
+        // ]);
     }
 }

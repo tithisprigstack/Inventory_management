@@ -15,15 +15,18 @@
         h2 {
             margin: 0;
             font-size: 24px;
+            color: black !important;
         }
         p {
             line-height: 1.5;
             margin: 0.5em 0;
-            font-weight: 500
+            font-weight: 500;
+            color: black !important;
         }
         .footer {
             text-align:start;
             padding: 10px 0;
+            color: black !important;
         }
     </style>
 </head>

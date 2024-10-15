@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\SendEmails;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\Test\Constraint\ResponseStatusCodeSame;
@@ -14,7 +16,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->commands([
+           SendEmails ::class,
+        ]);
     }
 
     /**
@@ -28,5 +32,8 @@ class AppServiceProvider extends ServiceProvider
                 'message' => $message,
             ], $statuscode);
         });
+
+        // Schedule $schedule
+        // $schedule->command('app:send-emails')->everyMinute();
     }
 }

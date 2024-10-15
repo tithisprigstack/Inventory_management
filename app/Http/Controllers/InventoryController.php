@@ -22,9 +22,6 @@ class InventoryController extends Controller
             $page = 1;
             $inventoryData->where(function ($query) use ($skey) {
                 $query->where('name', 'like', "%$skey%")
-                    ->orWhereHas('category', function ($q) use ($skey) {
-                        $q->where('name', 'like', "%$skey%");
-                    })
                     ->orWhereHas('inventoryDetail', function ($query) use ($skey) {
                         $query->whereHas('vendor', function ($subquery) use ($skey) {
                             $subquery->where('name', 'like', "%$skey%");
